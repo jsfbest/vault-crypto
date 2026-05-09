@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vault Crypto 解密工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#1a1a2e;color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.container{background:#16213e;border-radius:12px;padding:40px;max-width:600px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+h1{font-size:24px;margin-bottom:8px;color:#fff}
+.subtitle{font-size:14px;color:#888;margin-bottom:24px}
+label{display:block;font-size:14px;margin-bottom:8px;color:#aaa}
+textarea{width:100%;min-height:120px;background:#0f3460;border:1px solid #333;border-radius:8px;padding:12px;color:#e0e0e0;font-family:monospace;font-size:13px;resize:vertical}
+textarea:focus{outline:none;border-color:#533483}
+input[type=password]{width:100%;background:#0f3460;border:1px solid #333;border-radius:8px;padding:12px;color:#e0e0e0;font-size:16px;margin-bottom:16px}
+input[type=password]:focus{outline:none;border-color:#533483}
+button{width:100%;padding:12px;background:#533483;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:background .2s}
+button:hover{background:#6c44b2}
+button:disabled{background:#333;cursor:not-allowed}
+.result{margin-top:16px;display:none}
+.result textarea{min-height:200px;background:#1a3a1a;border-color:#2a5a2a}
+.error{margin-top:16px;padding:12px;background:#3a1a1a;border:1px solid #5a2a2a;border-radius:8px;color:#ff8888;display:none;font-size:14px}
+.info{margin-top:12px;font-size:12px;color:#666}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Vault Crypto 解密工具</h1>
+<div class="subtitle" id="filename">粘贴加密内容，输入密码即可解密</div>
+
+<div id="paste-section">
+<label for="ciphertext">加密内容</label>
+<textarea id="ciphertext" placeholder="粘贴以 -----VAULT-CRYPTO----- 开头的加密内容..."></textarea>
+</div>
+
+<label for="password">密码</label>
+<input type="password" id="password" placeholder="输入解密密码">
+
+<button id="decrypt-btn" onclick="doDecrypt()">解密</button>
+
+<div class="result" id="result-section">
+<label>解密结果</label>
+<textarea id="result" readonly></textarea>
+</div>
+
+<div class="error" id="error"></div>
+
+<div class="info">本工具完全在浏览器本地运行，不会上传任何数据。基于 AES-256-GCM + PBKDF2-SHA512。</div>
+</div>
+
+<script>
+var EMBEDDED_CIPHERTEXT = "";
+var EMBEDDED_FILENAME = "";
+
+if (EMBEDDED_CIPHERTEXT) {
+	document.getElementById("paste-section").style.display = "none";
+	document.getElementById("filename").textContent = EMBEDDED_FILENAME || "";
+	document.title = "Vault Crypto - " + (EMBEDDED_FILENAME || "\u89e3\u5bc6");
+}
+
+var MAGIC_HEADER = "-----VAULT-CRYPTO-----";
+
+function base64ToUint8(base64) {
+	var binary = atob(base64);
+	var bytes = new Uint8Array(binary.length);
+	for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+	return bytes;
+}
+
+async function deriveKey(password, salt, iterations) {
+	var encoder = new TextEncoder();
+	var keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+	return crypto.subtle.deriveKey(
+		{ name: "PBKDF2", salt: salt, iterations: iterations, hash: "SHA-512" },
+		keyMaterial,
+		{ name: "AES-GCM", length: 256 },
+		false,
+		["decrypt"]
+	);
+}
+
+async function decryptContent(encryptedContent, password) {
+	if (!encryptedContent.startsWith(MAGIC_HEADER)) throw new Error("\u4e0d\u662f Vault Crypto \u52a0\u5bc6\u6587\u4ef6");
+	var payloadB64 = encryptedContent.slice(MAGIC_HEADER.length).trim();
+	var payload = JSON.parse(atob(payloadB64));
+	var salt = base64ToUint8(payload.salt);
+	var iv = base64ToUint8(payload.iv);
+	var ciphertext = base64ToUint8(payload.ciphertext);
+	var iterations = payload.iter || 1000000;
+	var key = await deriveKey(password, salt, iterations);
+	var decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, ciphertext);
+	return new TextDecoder().decode(decrypted);
+}
+
+async function doDecrypt() {
+	var btn = document.getElementById("decrypt-btn");
+	var errorEl = document.getElementById("error");
+	var resultSection = document.getElementById("result-section");
+	var resultEl = document.getElementById("result");
+	errorEl.style.display = "none";
+	resultSection.style.display = "none";
+	var ciphertext = EMBEDDED_CIPHERTEXT || document.getElementById("ciphertext").value.trim();
+	var password = document.getElementById("password").value;
+	if (!ciphertext) { errorEl.textContent = "\u8bf7\u7c98\u8d34\u52a0\u5bc6\u5185\u5bb9"; errorEl.style.display = "block"; return; }
+	if (!password) { errorEl.textContent = "\u8bf7\u8f93\u5165\u5bc6\u7801"; errorEl.style.display = "block"; return; }
+	btn.disabled = true;
+	btn.textContent = "\u89e3\u5bc6\u4e2d...";
+	try {
+		var plaintext = await decryptContent(ciphertext, password);
+		resultEl.value = plaintext;
+		resultSection.style.display = "block";
+	} catch (e) {
+		errorEl.textContent = "\u89e3\u5bc6\u5931\u8d25\uff1a\u5bc6\u7801\u9519\u8bef\u6216\u6587\u4ef6\u5df2\u635f\u574f";
+		errorEl.style.display = "block";
+	} finally {
+		btn.disabled = false;
+		btn.textContent = "\u89e3\u5bc6";
+	}
+}
+
+document.getElementById("password").addEventListener("keydown", function(e) {
+	if (e.key === "Enter") doDecrypt();
+});
+</script>
+</body>
+</html>

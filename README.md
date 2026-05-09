@@ -75,6 +75,15 @@ npm run build
 1. Right-click an encrypted file → **完全解密文件**
 2. Enter password once → file permanently reverted to plaintext
 
+### Decrypt tool export
+
+1. Right-click an encrypted file → **导出解密工具**
+2. Desktop: system save dialog opens → choose save location
+3. Mobile: HTML saved to same folder as the .md file
+4. Share the exported HTML file — recipient opens it in browser, enters password to decrypt
+
+A generic decryption page (paste ciphertext mode) is also available at `tools/decrypt.html`.
+
 ### Commands
 
 Open command palette (`Cmd/Ctrl + P`) and search:
@@ -86,6 +95,7 @@ Open command palette (`Cmd/Ctrl + P`) and search:
 | 完全解密当前文件 | Permanently decrypt current file |
 | 加密当前文件所在文件夹 | Encrypt all .md in current folder |
 | 完全解密当前文件所在文件夹 | Permanently decrypt all .md in current folder |
+| 导出解密工具 | Export standalone decrypt HTML for current encrypted file |
 
 ## Settings
 

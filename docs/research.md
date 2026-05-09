@@ -74,3 +74,28 @@ Lockdown 的 crypto 层 `src/core/crypto/` 值 200 行代码，但整个 plugin 
 - Folder Guard (`robfelice/folder-guard`) — 很新，0 star
 - Encrypted Folders (`eng618/obsidian-encrypted-folders`) — PR 待审核
 - Cryptsidian — 已废弃，弱加密（AES-256-CTR + 静态 salt）
+
+## 后续竞品分析（2026-05-09）
+
+### globaloe（shlemiel/globaloe）— Global Markdown Encryption
+
+- AES-256-GCM + PBKDF2-SHA512 **1,000,000 iterations**
+- 加密后扩展名改为 `.aes256` → Syncthing/Obsidian 不当 markdown 处理 → 同步断裂
+- 单密码全局加解密，无临时查看概念
+- 仅 editing-view 模式，无 auto-lock
+
+### obsidian-inline-encrypter（solargate/obsidian-inline-encrypter）
+
+- AES-256-GCM，选区加密（inline code block），不是整文件加密
+- 提供独立 `tools/decrypt.html`（粘贴密文 + 输密码模式）
+- 不改文件扩展名（因为只是内联代码块）
+
+### 分析结论
+
+globaloe 和 inline-encrypter **同源**（作者 shlemiel / Alexander Cheryomukhin.solargate 大概率同一人）：
+- globaloe = 整文件加密 → 发现 `.aes256` 扩展名导致同步断裂
+- inline-encrypter = 转为选区加密以绕过扩展名问题 → 但不能保护整个文件
+
+vault-crypto 差异化：整文件加密 + 不改扩展名 + 三态自动重加密 + 文件夹加密 + auto-lock + 独立解密 HTML 工具。
+
+PBKDF2 迭代已对齐 globaloe（1M iter），并在 payload 中新增 `iter` 字段保证向后兼容。

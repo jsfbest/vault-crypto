@@ -4,14 +4,18 @@
 
 ```
 src/
-├── main.ts              # 插件入口（820+ 行）：生命周期 + 命令 + 右键菜单 + 事件 + 三态管理 + 自动锁定
-├── crypto.ts            # 加密核心：AES-256-GCM + PBKDF2（Web Crypto API）
+├── main.ts              # 插件入口（890+ 行）：生命周期 + 命令 + 右键菜单 + 事件 + 三态管理 + 自动锁定 + 导出解密工具
+├── crypto.ts            # 加密核心：AES-256-GCM + PBKDF2（payload 含 iter 字段，向后兼容）
+├── decryptHtml.ts       # 生成嵌入式解密 HTML（密文内嵌，接收方只需密码）
 ├── LockManager.ts       # 状态管理：lockFile returns "encrypted"|"skipped"，lockFolder returns {success,skipped,failed}
 ├── Logger.ts            # 文件日志：桌面端写 vault-crypto.log，移动端 console-only
 ├── SettingsTab.ts       # 设置界面：autoLockMinutes=1, confirmOnEncrypt=true
 └── ui/
     ├── PasswordModal.ts # 密码输入弹窗：encrypt/decrypt 两种模式，resolve-before-close
-    └── LockOverlay.ts   # 锁定遮罩：无按钮，提示右键查看
+    ├── LockOverlay.ts   # 锁定遮罩：无按钮，提示右键查看
+    └── FuzzyFolderSuggest.ts # 文件夹模糊搜索选择（移动端导出 fallback）
+tools/
+└── decrypt.html         # 独立解密页面（粘贴模式，从 GitHub 下载即用）
 styles.css               # overlay 样式（含 lock-hint）
 ```
 
@@ -22,7 +26,7 @@ styles.css               # overlay 样式（含 lock-hint）
 加密后文件仍是 `.md`，内容替换为：
 ```
 -----VAULT-CRYPTO-----
-<base64(JSON{salt, iv, ciphertext})>
+<base64(JSON{salt, iv, ciphertext, iter})>
 ```
 
 **为什么**：
@@ -107,7 +111,9 @@ Unencrypted ──加密──→ Encrypted(locked) ──查看──→ TempVi
 
 加密文件格式是公开的（`-----VAULT-CRYPTO-----` + base64 JSON），任何人拿到密码后可用任何语言实现解密（AES-256-GCM 是标准算法）。
 
-MVP 不提供独立解密工具，P2 可考虑 standalone HTML 解密页。
+MVP 提供独立解密 HTML 工具：
+- `tools/decrypt.html`：通用粘贴模式，从 GitHub 下载即用
+- 插件命令"导出解密工具"：生成嵌入式 HTML（密文内嵌，文件名匹配原 .md），桌面端调系统保存对话框，移动端存到 vault 原文件目录
 
 ## 加密流程
 
@@ -123,7 +129,7 @@ isEncrypted? → 是 → Notice "此文件已加密"，中止
 encrypt(content, password)
   ↓ PBKDF2-SHA512 1M iter → deriveKey
   ↓ AES-256-GCM encrypt
-  ↓ 组装 payload: header + base64(JSON{salt, iv, ciphertext})
+   ↓ 组装 payload: header + base64(JSON{salt, iv, ciphertext, iter})
   ↓
 vault.modify(file, encryptedContent)
   ↓
@@ -199,10 +205,10 @@ Notice 显示: "加密完成：成功 N 个，跳过 N 个（已加密），失�
 
 ## 功能范围
 
-**已完成（P0 + 部分 P1）**：
-- 右键菜单：加密文件 / 查看加密文件 / 完全解密文件 / 加密文件夹 / 完全解密文件夹
+**已完成（P0 + 部分 P1 + P2 解密工具）**：
+- 右键菜单：加密文件 / 查看加密文件 / 完全解密文件 / 加密文件夹 / 完全解密文件夹 / 导出解密工具
 - 编辑区右键：查看加密文件
-- 命令面板：加密当前文件 / 查看加密当前文件 / 完全解密当前文件 / 加密文件夹 / 完全解密文件夹
+- 命令面板：加密当前文件 / 查看加密当前文件 / 完全解密当前文件 / 加密文件夹 / 完全解密文件夹 / 导出解密工具
 - 密码弹窗：加密模式（输入两次），解密模式（输入一次）
 - 锁定遮罩：无按钮，提示右键操作
 - 三态模型：临时查看自动重加密
@@ -217,5 +223,4 @@ Notice 显示: "加密完成：成功 N 个，跳过 N 个（已加密），失�
 - 生物识别
 - 移动端 UI 适配（crypto 层已就绪）
 - 写后验证 roundtrip
-- 独立解密工具（standalone HTML）
 - iOS 适配

@@ -1,5 +1,6 @@
 import {
 	App,
+	FileSystemAdapter,
 	MarkdownView,
 	Menu,
 	Modal,
@@ -11,6 +12,7 @@ import {
 	WorkspaceLeaf,
 } from "obsidian";
 import { isEncrypted, encrypt, decrypt } from "./crypto";
+import { generateDecryptHtml } from "./decryptHtml";
 import { LockManager } from "./LockManager";
 import { Logger } from "./Logger";
 import {
@@ -20,6 +22,7 @@ import {
 } from "./SettingsTab";
 import { LockOverlay } from "./ui/LockOverlay";
 import { PasswordModal } from "./ui/PasswordModal";
+import { FuzzyFolderSuggest } from "./ui/FuzzyFolderSuggest";
 
 export default class VaultCryptoPlugin extends Plugin {
 	settings: VaultCryptoSettings = DEFAULT_SETTINGS;
@@ -184,6 +187,23 @@ export default class VaultCryptoPlugin extends Plugin {
 				return true;
 			},
 		});
+
+		this.addCommand({
+			id: "export-decrypt-tool",
+			name: "导出解密工具",
+			checkCallback: (checking: boolean) => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file || file.extension !== "md") return false;
+				if (!this.knownEncryptedPaths.has(file.path)) return false;
+				if (checking) return true;
+
+				this.exportDecryptTool(file).catch((err) => {
+					this.logger.error("export-decrypt-tool command failed", { error: String(err) });
+					new Notice("导出失败：" + String(err));
+				});
+				return true;
+			},
+		});
 	}
 
 	private registerContextMenus(): void {
@@ -207,6 +227,16 @@ export default class VaultCryptoPlugin extends Plugin {
 								.onClick(() => {
 									this.decryptFile(file).catch((err) => {
 										this.logger.error("Decrypt menu click failed", { error: String(err) });
+									});
+								});
+						});
+
+						menu.addItem((item) => {
+							item
+								.setTitle("导出解密工具")
+								.onClick(() => {
+									this.exportDecryptTool(file).catch((err) => {
+										this.logger.error("Export decrypt tool menu click failed", { error: String(err) });
 									});
 								});
 						});
@@ -580,6 +610,74 @@ export default class VaultCryptoPlugin extends Plugin {
 		} finally {
 			this.isProcessing.delete(file.path);
 		}
+	}
+
+	private async exportDecryptTool(file: TFile): Promise<void> {
+		try {
+			const content = await this.app.vault.read(file);
+			if (!isEncrypted(content)) {
+				new Notice("此文件未加密");
+				return;
+			}
+
+			const basename = file.basename;
+			const html = generateDecryptHtml(content, basename);
+
+			if (this.app.vault.adapter instanceof FileSystemAdapter) {
+				const vaultBase = this.app.vault.adapter.getBasePath();
+				const savePath = await this.showSystemSaveDialog(vaultBase, basename + "-decrypt.html");
+				if (!savePath) return;
+
+				const fs = require("fs/promises") as typeof import("fs/promises");
+				await fs.writeFile(savePath, html, "utf-8");
+				new Notice("已导出：" + savePath);
+				this.logger.info("Exported decrypt tool (desktop)", { path: savePath });
+			} else {
+				const outputPath = file.parent
+					? file.parent.path + "/" + basename + "-decrypt.html"
+					: basename + "-decrypt.html";
+
+				const existing = this.app.vault.getFileByPath(outputPath);
+				if (existing) {
+					await this.app.vault.modify(existing, html);
+				} else {
+					await this.app.vault.create(outputPath, html);
+				}
+				new Notice("已导出：" + outputPath);
+				this.logger.info("Exported decrypt tool (mobile)", { path: outputPath });
+			}
+		} catch (err) {
+			if (String(err).includes("User aborted") || String(err).includes("cancelled")) return;
+			this.logger.error("Failed to export decrypt tool", { error: String(err) });
+			new Notice("导出失败：" + (err instanceof Error ? err.message : String(err)));
+		}
+	}
+
+	private async showSystemSaveDialog(defaultDir: string, defaultFilename: string): Promise<string | null> {
+		const electron = (window as unknown as { require: (m: string) => unknown }).require("electron") as {
+			remote?: { dialog: { showSaveDialog: (opts: Record<string, unknown>) => Promise<{ canceled: boolean; filePath?: string }> } };
+			dialog?: { showSaveDialog: (opts: Record<string, unknown>) => Promise<{ canceled: boolean; filePath?: string }> };
+		};
+		const dialog = electron.remote?.dialog ?? electron.dialog;
+		if (!dialog) return null;
+		const result = await dialog.showSaveDialog({
+			defaultPath: defaultDir + "/" + defaultFilename,
+			filters: [{ name: "HTML", extensions: ["html"] }],
+		});
+		if (result.canceled) return null;
+		return result.filePath ?? null;
+	}
+
+	private pickFolder(sourceFile: TFile): Promise<TFolder | null> {
+		const folders: TFolder[] = [];
+		this.app.vault.getAllLoadedFiles().forEach((f) => {
+			if (f instanceof TFolder) folders.push(f);
+		});
+
+		return new Promise((resolve) => {
+			const modal = new FuzzyFolderSuggest(this.app, folders, sourceFile.parent, resolve);
+			modal.open();
+		});
 	}
 
 	private async encryptFolder(folder: TFolder): Promise<void> {
