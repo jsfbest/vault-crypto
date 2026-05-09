@@ -4,13 +4,13 @@
  * Design decisions:
  * - Web Crypto API only (no Node crypto) → works on desktop + mobile
  * - AES-256-GCM for authenticated encryption (integrity + confidentiality)
- * - PBKDF2-SHA512 with 600K iterations for key derivation
+ * - PBKDF2-SHA512 with 1,000,000 iterations for key derivation
  * - Per-file random salt (128-bit) + IV (96-bit)
  * - Encrypted file format: base64(JSON{salt, iv, ciphertext}) with magic header
  */
 
 const MAGIC_HEADER = "-----VAULT-CRYPTO-----";
-const PBKDF2_ITERATIONS = 600_000;
+const PBKDF2_ITERATIONS = 1_000_000;
 const SALT_LENGTH = 16;   // 128-bit
 const IV_LENGTH = 12;     // 96-bit for GCM
 const KEY_LENGTH = 256;   // AES-256

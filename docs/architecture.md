@@ -121,7 +121,7 @@ PasswordModal(encrypt) → 输入密码×2
 isEncrypted? → 是 → Notice "此文件已加密"，中止
   ↓
 encrypt(content, password)
-  ↓ PBKDF2-SHA512 600K iter → deriveKey
+  ↓ PBKDF2-SHA512 1M iter → deriveKey
   ↓ AES-256-GCM encrypt
   ↓ 组装 payload: header + base64(JSON{salt, iv, ciphertext})
   ↓

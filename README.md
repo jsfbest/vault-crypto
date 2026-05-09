@@ -20,7 +20,7 @@ An Obsidian plugin that provides real AES-256-GCM encryption for your Markdown n
 | Parameter | Value |
 |-----------|-------|
 | Algorithm | AES-256-GCM |
-| Key derivation | PBKDF2-SHA512, 600,000 iterations |
+| Key derivation | PBKDF2-SHA512, 1,000,000 iterations |
 | Salt | 128-bit random (unique per encryption) |
 | IV | 96-bit random (unique per encryption) |
 | File marker | `-----VAULT-CRYPTO-----` header |
