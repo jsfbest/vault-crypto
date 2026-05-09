@@ -28,8 +28,10 @@ An Obsidian plugin that provides real AES-256-GCM encryption for your Markdown n
 Encrypted file format:
 ```
 -----VAULT-CRYPTO-----
-<base64(JSON{salt, iv, ciphertext})>
+<base64(JSON{salt, iv, ciphertext, iter})>
 ```
+
+The `iter` field stores the PBKDF2 iteration count used for encryption, ensuring backward compatibility if the default ever changes.
 
 File extension stays `.md` — only the content is replaced with ciphertext. Any sync tool will see a normal `.md` file with unreadable content.
 

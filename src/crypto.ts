@@ -19,6 +19,7 @@ interface EncryptedPayload {
 	salt: string;      // base64
 	iv: string;        // base64
 	ciphertext: string; // base64
+	iter: number;      // PBKDF2 iterations used for this file
 }
 
 // ---------- Key derivation ----------
@@ -26,6 +27,14 @@ interface EncryptedPayload {
 async function deriveKey(
 	password: string,
 	salt: Uint8Array,
+): Promise<CryptoKey> {
+	return deriveKeyIterations(password, salt, PBKDF2_ITERATIONS);
+}
+
+async function deriveKeyIterations(
+	password: string,
+	salt: Uint8Array,
+	iterations: number,
 ): Promise<CryptoKey> {
 	const encoder = new TextEncoder();
 	const keyMaterial = await crypto.subtle.importKey(
@@ -40,7 +49,7 @@ async function deriveKey(
 		{
 			name: "PBKDF2",
 			salt: salt as BufferSource,
-			iterations: PBKDF2_ITERATIONS,
+			iterations,
 			hash: "SHA-512",
 		},
 		keyMaterial,
@@ -94,6 +103,7 @@ export async function encrypt(
 		salt: uint8ToBase64(salt),
 		iv: uint8ToBase64(iv),
 		ciphertext: uint8ToBase64(new Uint8Array(ciphertext)),
+		iter: PBKDF2_ITERATIONS,
 	};
 
 	return MAGIC_HEADER + "\n" + btoa(JSON.stringify(payload));
@@ -117,7 +127,8 @@ export async function decrypt(
 	const salt = base64ToUint8(payload.salt);
 	const iv = base64ToUint8(payload.iv);
 	const ciphertext = base64ToUint8(payload.ciphertext);
-	const key = await deriveKey(password, salt);
+	const iterations = payload.iter ?? PBKDF2_ITERATIONS;
+	const key = await deriveKeyIterations(password, salt, iterations);
 
 	const decrypted = await crypto.subtle.decrypt(
 		{ name: "AES-GCM", iv: iv as BufferSource },

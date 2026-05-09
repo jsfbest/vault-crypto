@@ -114,9 +114,12 @@ eyJzYWx0Ijoi...base64...IiwiY2lwaGVydGV4dCI6Ii4uLmJhc2U2NC4uLiJ9
 {
   "salt": "<128-bit random, base64>",
   "iv": "<96-bit random, base64>",
-  "ciphertext": "<AES-256-GCM encrypted data, base64>"
+  "ciphertext": "<AES-256-GCM encrypted data, base64>",
+  "iter": 1000000
 }
 ```
+
+`iter` 字段记录加密时使用的 PBKDF2 迭代次数，确保解密时使用正确的参数（向后兼容旧文件）。
 
 如需在 Obsidian 外解密：需实现相同的 PBKDF2 + AES-GCM 解密流程（任何支持 Web Crypto API 的环境均可）。
 
