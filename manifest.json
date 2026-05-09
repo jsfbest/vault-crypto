@@ -1,0 +1,9 @@
+{
+	"id": "vault-crypto",
+	"name": "Vault Crypto",
+	"version": "1.0.0",
+	"minAppVersion": "1.5.7",
+	"description": "Encrypt and decrypt markdown notes with AES-256-GCM. In-place encryption, auto re-lock, and sync-friendly.",
+	"author": "Jason",
+	"isDesktopOnly": false
+}

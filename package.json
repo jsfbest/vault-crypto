@@ -1,0 +1,26 @@
+{
+	"name": "obsidian-vault-crypto",
+	"version": "1.0.0",
+	"description": "Encrypt and decrypt markdown files and folders with AES-256-GCM",
+	"main": "main.js",
+	"type": "module",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+	},
+	"keywords": [
+		"obsidian",
+		"encryption",
+		"aes-256-gcm",
+		"password"
+	],
+	"devDependencies": {
+		"@types/node": "^16.11.6",
+		"esbuild": "0.25.5",
+		"tslib": "2.4.0",
+		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"obsidian": "latest"
+	}
+}

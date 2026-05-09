@@ -1,0 +1,7 @@
+node_modules/
+main.js
+main.js.map
+dist/
+test-crypto.mjs
+AGENTS.md
+docs/handoff.md
