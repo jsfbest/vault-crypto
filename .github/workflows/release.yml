@@ -20,6 +20,11 @@ jobs:
         run: |
           npm install
           npm run build
+      - name: Package for release
+        run: |
+          mkdir vault-crypto
+          cp main.js manifest.json styles.css vault-crypto/
+          zip -r vault-crypto.zip vault-crypto/
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -28,4 +33,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
-            main.js manifest.json styles.css
+            vault-crypto.zip main.js manifest.json styles.css

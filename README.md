@@ -41,9 +41,9 @@ File extension stays `.md` — only the content is replaced with ciphertext. Any
 ## Installation
 
 1. Go to the [latest release](https://github.com/jsfbest/vault-crypto/releases/latest)
-2. Download all 3 files: `main.js`, `manifest.json`, `styles.css`
-3. In your Obsidian vault, create folder: `.obsidian/plugins/vault-crypto/`
-4. Copy the 3 downloaded files into that folder
+2. Download `vault-crypto.zip`
+3. Unzip it → you get a `vault-crypto/` folder containing `main.js`, `manifest.json`, `styles.css`
+4. Copy the `vault-crypto/` folder into your vault's `.obsidian/plugins/` directory
 5. Restart Obsidian → Settings → Community plugins → enable **Vault Crypto**
 
 ## Usage

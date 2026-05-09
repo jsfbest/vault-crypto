@@ -41,9 +41,9 @@
 ## 安装
 
 1. 前往 [最新 Release](https://github.com/jsfbest/vault-crypto/releases/latest)
-2. 下载 3 个文件：`main.js`、`manifest.json`、`styles.css`
-3. 在你的 Obsidian vault 中创建目录：`.obsidian/plugins/vault-crypto/`
-4. 将下载的 3 个文件复制到该目录
+2. 下载 `vault-crypto.zip`
+3. 解压后得到 `vault-crypto/` 文件夹，内含 `main.js`、`manifest.json`、`styles.css`
+4. 将 `vault-crypto/` 文件夹复制到 vault 的 `.obsidian/plugins/` 目录下
 5. 重启 Obsidian → 设置 → 社区插件 → 启用 **Vault Crypto**
 
 ## 使用
