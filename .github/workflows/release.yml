@@ -33,4 +33,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
-            vault-crypto.zip main.js manifest.json styles.css
+            vault-crypto.zip
