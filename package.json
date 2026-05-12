@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-vault-crypto",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Encrypt and decrypt markdown files and folders with AES-256-GCM",
 	"main": "main.js",
 	"type": "module",
