@@ -69,7 +69,7 @@ File extension stays `.md` — only the content is replaced with ciphertext. Any
 
 ### Export decrypt tool
 
-1. Right-click an encrypted file → **Export Decrypt Tool**
+1. Right-click an encrypted file → **Export Encrypted HTML**
 2. Desktop: system save dialog opens → choose save location
 3. Mobile: HTML saved to same folder as the .md file
 4. Share the exported HTML file — recipient opens it in browser, enters password to decrypt
@@ -112,6 +112,10 @@ npm install
 npm run dev    # Watch mode
 npm run build  # Production build
 ```
+
+## Acknowledgments
+
+- [Marked.js](https://github.com/markedjs/marked) — Markdown rendering in the standalone decrypt HTML tool ([MIT License](https://github.com/markedjs/marked/blob/master/LICENSE))
 
 ## License
 

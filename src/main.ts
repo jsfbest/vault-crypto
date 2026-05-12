@@ -190,7 +190,7 @@ export default class VaultCryptoPlugin extends Plugin {
 
 		this.addCommand({
 			id: "export-decrypt-tool",
-			name: "导出解密工具",
+			name: "导出加密HTML",
 			checkCallback: (checking: boolean) => {
 				const file = this.app.workspace.getActiveFile();
 				if (!file || file.extension !== "md") return false;
@@ -233,7 +233,7 @@ export default class VaultCryptoPlugin extends Plugin {
 
 						menu.addItem((item) => {
 							item
-								.setTitle("导出解密工具")
+								.setTitle("导出加密HTML")
 								.onClick(() => {
 									this.exportDecryptTool(file).catch((err) => {
 										this.logger.error("Export decrypt tool menu click failed", { error: String(err) });

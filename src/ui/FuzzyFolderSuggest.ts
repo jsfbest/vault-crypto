@@ -18,7 +18,7 @@ export class FuzzyFolderSuggest extends FuzzySuggestModal<string> {
 		this.defaultFolder = defaultFolder?.path ?? "/";
 		this.folders = allFolders.map((f) => f.path);
 		this.setPlaceholder("选择导出文件夹…");
-		this.setTitle("导出解密工具");
+		this.setTitle("导出加密HTML");
 
 		this.onClose = () => {
 			this.resolve(null);
